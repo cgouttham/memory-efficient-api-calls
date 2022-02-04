@@ -9,6 +9,7 @@ namespace ConsoleApp1
     using System.IO;
     using System.Net;
     using System.Net.Http;
+    using System.Net.Http.Headers;
     using System.Net.Mime;
     using System.Runtime.Serialization.Json;
     using System.Text;
@@ -32,8 +33,9 @@ namespace ConsoleApp1
             try
             {
                 FileStream fs2 = File.Create(filenamegenerator("finaloutput.txt"));
+                MemoryStream ms = new MemoryStream();
 
-                writer = JsonReaderWriterFactory.CreateJsonWriter(fs2);
+                writer = JsonReaderWriterFactory.CreateJsonWriter(ms);
 
                 var importItemRequestBody = new ImportItemRequestBody(IdFormat.RestId, "Mock_FolderId");
 
@@ -72,7 +74,13 @@ namespace ConsoleApp1
                  // Write the XML to file and close the writer.
                  writer.Flush();
                  writer.Close();
-             }
+
+                HttpContent httpContent = null;
+                ms.Seek(0, SeekOrigin.Begin);
+                httpContent = new StreamContent(ms);
+                httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                string s = await httpContent.ReadAsStringAsync().ConfigureAwait(false);
+            }
 
              finally
              {
