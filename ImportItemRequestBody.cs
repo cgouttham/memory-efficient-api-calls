@@ -21,10 +21,10 @@ namespace Microsoft.ElcArchiveProcessor.Models.SubstrateApiRequestTypes
         /// <param name="idFormat">Id format.</param>
         /// <param name="rawData">Raw Data of Generic Item</param>
         /// <param name="folderId">Folder id of generic item</param>
-        public ImportItemRequestBody(IdFormat idFormat, string folderId, Stream rawData)
+        public ImportItemRequestBody(IdFormat idFormat, string folderId)
         {
             this.IdFormat = idFormat;
-            this.Data = rawData;
+            this.Data = "hello";
             this.FolderId = folderId;
         }
 
@@ -41,7 +41,7 @@ namespace Microsoft.ElcArchiveProcessor.Models.SubstrateApiRequestTypes
         /// <summary>
         /// Raw Data of the item.
         /// </summary>
-        public Stream Data { get; set; }
+        public string Data { get; set; }
 
     }
     public enum IdFormat
