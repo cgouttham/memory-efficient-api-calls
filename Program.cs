@@ -55,26 +55,19 @@ namespace ConsoleApp1
                 writer.WriteAttributeString("type", "string");
 
                 // Write to Stream
-                char[] buffer = new char[1000];
+                byte[] buffer = new byte[300];
                 base64encodedStream.Seek(0, SeekOrigin.Begin);
                 var base64StreamReader = new XmlTextReader(base64encodedStream);
 
-                Stream base64Encoded = base64encodedStream.ConvertToBase64();
-                using TextReader textReader = new StreamReader(base64Encoded);
-                using TextWriter textWriter = new StreamWriter(fs2);
-
                 int numCharsRead;
-                while ((numCharsRead = textReader.Read(buffer, 0, 100)) > 0)
+                base64encodedStream.Seek(0, SeekOrigin.Begin);
+                while ((numCharsRead = base64encodedStream.Read(buffer, 0, buffer.Length)) > 0)
                 {
-                    writer.WriteString("hi");
-                    writer.WriteString("hello");
+                    writer.WriteBase64(buffer, 0, numCharsRead);
                 }
                 
                 writer.WriteEndElement();
-
                 writer.WriteEndElement();
-
-
 
                  // Write the XML to file and close the writer.
                  writer.Flush();
