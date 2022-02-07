@@ -21,6 +21,11 @@
          */
         static async Task Main(string[] args)
         {
+            await ExportAndImportLargeItemsEfficiently().ConfigureAwait(false);
+        }
+
+        private static async Task ExportAndImportLargeItemsEfficiently()
+        {
             // Send Mock HttpRequest that returns a massive Json Payload
             // using Stream httpContentStream = await SendMockExportItemRequestFromFileAsync().ConfigureAwait(false);
             using Stream httpContentStream = await GetLargeExportedItemAsync().ConfigureAwait(false);
@@ -33,10 +38,11 @@
 
             // Write Data Property into Import Item Request Body (HttpContent)
             var importItemRequestBody = new ImportItemRequestBody(IdFormat.RestId, "Mock_FolderId");
-            HttpContent content = WriteImportItemRequestBodyToHttpRequest(importItemRequestBody, base64MailDataStream);
+
+            await WriteImportItemRequestBodyToHttpRequest(importItemRequestBody, base64MailDataStream).ConfigureAwait(false);
+
             base64MailDataStream.Flush();
             base64MailDataStream.Close();
-
         }
 
         /// <summary>
@@ -44,7 +50,7 @@
         /// </summary>
         /// <param name="base64MailDataStream"></param>
         /// <returns></returns>
-        private static HttpContent WriteImportItemRequestBodyToHttpRequest(ImportItemRequestBody importItemRequestBody, Stream base64MailDataStream)
+        private static async Task WriteImportItemRequestBodyToHttpRequest(ImportItemRequestBody importItemRequestBody, Stream base64MailDataStream)
         {
             XmlDictionaryWriter writer = null;
             try
@@ -90,10 +96,15 @@
 
                 HttpContent httpOutputContent = null;
                 outputHttpContentStream.Seek(0, SeekOrigin.Begin);
+
+
                 httpOutputContent = new StreamContent(outputHttpContentStream);
                 httpOutputContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
-                return httpOutputContent;
+                using (FileStream file = File.Create("C:\\Users\\goch\\source\\repos\\ConsoleApp1\\testData\\large_items\\output_exported_40mb_item.txt"))
+                {
+                    await httpOutputContent.CopyToAsync(file).ConfigureAwait(false);
+                }
             }
             finally
             {
