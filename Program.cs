@@ -23,9 +23,13 @@
         {
             for (int i = 0; i < 20; i++)
             {
-                await  ExportAndImportDataOldWay.ExportAndImportLargeItemsNotEfficiently().ConfigureAwait(false);
-                await ExportAndImportDataNewWay.ExportAndImportLargeItemsEfficiently().ConfigureAwait(false);
+                /* Comment Out the One You don't want to run. You can use Perfview to do a more detailed analysis of performance of app */ 
 
+                // Old way I parsed ExportedItem from DB1 and imported to DB2
+                await ExportAndImportDataOldWay.ExportAndImportLargeItemsNotEfficiently().ConfigureAwait(false);
+
+                // Optimized way to handle the Exported Json object and import it to DB2
+                await ExportAndImportDataNewWay.ExportAndImportLargeItemsEfficiently().ConfigureAwait(false);
             }
             Console.WriteLine("Done");
         }
