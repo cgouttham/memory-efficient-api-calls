@@ -21,6 +21,10 @@
          */
         static async Task Main(string[] args)
         {
+            // Simulating (Exporting and Importing 20 Large Items (50 mb Items) consecutively to analyze memory efficiency and CPU usage.
+            // I've attached the "tiny_item.json" file but not the large item. That is in the gitignore because I didn't want to add large items like that 
+            // On Git. You can create a large piece of text and base64 encode and replace it with the data field of the tiny_item.json
+            // if you'd like to test it yourself.
             for (int i = 0; i < 20; i++)
             {
                 /* Comment Out the One You don't want to run. You can use Perfview to do a more detailed analysis of performance of app */ 
