@@ -1,18 +1,13 @@
 ﻿namespace ConsoleApp1
 {
     using Microsoft.ElcArchiveProcessor.Models.SubstrateApiRequestTypes;
+    using Microsoft.Exchange.Common.Net;
     using System;
-    using System.Buffers;
-    using System.Collections.Generic;
     using System.IO;
-    using System.Net;
     using System.Net.Http;
     using System.Net.Http.Headers;
-    using System.Net.Mime;
     using System.Runtime.Serialization.Json;
     using System.Text;
-    using System.Text.Json;
-    using System.Threading;
     using System.Threading.Tasks;
     using System.Xml;
 
@@ -27,27 +22,42 @@
         static async Task Main(string[] args)
         {
             // Send Mock HttpRequest that returns a massive Json Payload
-            HttpContent httpContent = SendMockExportItemRequest();
+            // using Stream httpContentStream = await SendMockExportItemRequestFromFileAsync().ConfigureAwait(false);
+            using Stream httpContentStream = await GetLargeExportedItemAsync().ConfigureAwait(false);
 
-            // Read HttpContent as a stream.
-            using Stream jsonResponseStream = await httpContent.ReadAsStreamAsync().ConfigureAwait(false);
-            jsonResponseStream.Seek(0, SeekOrigin.Begin);
+            // Get Data Property from Stream and store it in another stream.
+            using Stream base64MailDataStream = ReadDataPropertyFromExportResponseAsStream(httpContentStream);
 
-            Stream base64MailDataStream = ReadDataPropertyFromExportResponseAsStream(jsonResponseStream);
+            httpContentStream.Flush();
+            httpContentStream.Close();
 
+            // Write Data Property into Import Item Request Body (HttpContent)
+            var importItemRequestBody = new ImportItemRequestBody(IdFormat.RestId, "Mock_FolderId");
+            HttpContent content = WriteImportItemRequestBodyToHttpRequest(importItemRequestBody, base64MailDataStream);
+            base64MailDataStream.Flush();
+            base64MailDataStream.Close();
+
+        }
+
+        /// <summary>
+        /// Write Import Item Request Body Object to a Http Request Body
+        /// </summary>
+        /// <param name="base64MailDataStream"></param>
+        /// <returns></returns>
+        private static HttpContent WriteImportItemRequestBodyToHttpRequest(ImportItemRequestBody importItemRequestBody, Stream base64MailDataStream)
+        {
             XmlDictionaryWriter writer = null;
             try
             {
-                MemoryStream ms = new MemoryStream();
+                MultiByteArrayMemoryStream outputHttpContentStream = new MultiByteArrayMemoryStream();
 
-                writer = JsonReaderWriterFactory.CreateJsonWriter(ms);
+                writer = JsonReaderWriterFactory.CreateJsonWriter(outputHttpContentStream);
 
-                var importItemRequestBody = new ImportItemRequestBody(IdFormat.RestId, "Mock_FolderId");
 
                 // Write an element (this one is the root).
                 writer.WriteStartElement("root");
                 writer.WriteAttributeString("type", "object");
- 
+
                 writer.WriteStartElement($"{nameof(ImportItemRequestBody.IdFormat)}");
                 writer.WriteAttributeString("type", "string");
                 writer.WriteString(importItemRequestBody.IdFormat.ToString());
@@ -61,56 +71,70 @@
                 writer.WriteStartElement($"{nameof(ImportItemRequestBody.Data)}");
                 writer.WriteAttributeString("type", "string");
 
-                // Write to Stream
+                // Write Data Stream to HttpContent Stream
                 byte[] buffer = new byte[3000];
                 base64MailDataStream.Seek(0, SeekOrigin.Begin);
-                var base64StreamReader = new XmlTextReader(base64MailDataStream);
 
                 int numCharsRead;
-                base64MailDataStream.Seek(0, SeekOrigin.Begin);
                 while ((numCharsRead = base64MailDataStream.Read(buffer, 0, buffer.Length)) > 0)
                 {
                     writer.WriteBase64(buffer, 0, numCharsRead);
                 }
-                
+
                 writer.WriteEndElement();
                 writer.WriteEndElement();
 
-                 // Write the XML to file and close the writer.
-                 writer.Flush();
-                 writer.Close();
+                // Write the XML to file and close the writer.
+                writer.Flush();
+                writer.Close();
 
                 HttpContent httpOutputContent = null;
-                ms.Seek(0, SeekOrigin.Begin);
-                httpOutputContent = new StreamContent(ms);
+                outputHttpContentStream.Seek(0, SeekOrigin.Begin);
+                httpOutputContent = new StreamContent(outputHttpContentStream);
                 httpOutputContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-                string s = await httpOutputContent.ReadAsStringAsync().ConfigureAwait(false);
+
+                return httpOutputContent;
             }
-             finally
-             {
-                 if (writer != null)
-                     writer.Close();
-             }
+            finally
+            {
+                if (writer != null)
+                    writer.Close();
+            }
         }
 
-        private static HttpContent SendMockExportItemRequest()
+        private static async Task<Stream> SendMockExportItemRequestFromFileAsync()
+        {
+            MemoryStream ms = new MemoryStream();
+            using (FileStream file = new FileStream("C:\\Users\\goch\\source\\repos\\ConsoleApp1\\testData\\tiny_item.txt", FileMode.Open, FileAccess.Read))
+            {
+                await file.CopyToAsync(ms).ConfigureAwait(false);
+            }
+
+            ms.Seek(0, SeekOrigin.Begin);
+            return ms;
+        }
+
+
+        private static async Task<Stream> GetLargeExportedItemAsync()
+        {
+            Stream mbStream = new MultiByteArrayMemoryStream();
+            using (FileStream file = new FileStream("C:\\Users\\goch\\source\\repos\\ConsoleApp1\\testData\\large_items\\exported_40mb_item.txt", FileMode.Open, FileAccess.Read))
+            {
+                await file.CopyToAsync(mbStream).ConfigureAwait(false);
+            }
+
+            mbStream.Seek(0, SeekOrigin.Begin);
+            return mbStream;
+        }
+
+        private static async Task<Stream> SendMockExportItemRequestAsync()
         {
             string mockHttpResponseBody = "{\"@odata.context\": \"https://exhv-3291.exhv-3291dom.extest.microsoft.com/api/beta/$metadata#Microsoft.OutlookServices.ExportItemResponse\",\"ChangeKey\": \"CQAAABYAAACAeZ7BaJY2TJuMhZqWc4p3AAAAABBr\",\"Data\": \"cmVlQ29kZUNhbXAgaXMgYSBwcm92ZW4gcGF0aCB0byB5b3VyIGZpcnN0IHNvZnR3YXJlIGRldmVsb3BlciBqb2IuCgpNb3JlIHRoYW4gNDAsMDAwIHBlb3BsZSBoYXZlIGdvdHRlbiBkZXZlbG9wZXIgam9icyBhZnRlciBjb21wbGV0aW5nIHRoaXMg4oCTIGluY2x1ZGluZyBhdCBiaWcgY29tcGFuaWVzIGxpa2UgR29vZ2xlIGFuZCBNaWNyb3NvZnQuCgpJZiB5b3UgYXJlIG5ldyB0byBwcm9ncmFtbWluZywgd2UgcmVjb21tZW5kIHlvdSBzdGFydCBhdCB0aGUgYmVnaW5uaW5nIGFuZCBlYXJuIHRoZXNlIGNlcnRpZmljYXRpb25zIGluIG9yZGVyLgoKVG8gZWFybiBlYWNoIGNlcnRpZmljYXRpb24sIGJ1aWxkIGl0cyA1IHJlcXVpcmVkIHByb2plY3RzIGFuZCBnZXQgYWxsIHRoZWlyIHRlc3RzIHRvIHBhc3MuCgpZb3UgY2FuIGFkZCB0aGVzZSBjZXJ0aWZpY2F0aW9ucyB0byB5b3VyIHLDqXN1bcOpIG9yIExpbmtlZEluLiBCdXQgbW9yZSBpbXBvcnRhbnQgdGhhbiB0aGUgY2VydGlmaWNhdGlvbnMgaXMgdGhlIHByYWN0aWNlIHlvdSBnZXQgYWxvbmcgdGhlIHdheS4KCklmIHlvdSBmZWVsIG92ZXJ3aGVsbWVkLCB0aGF0IGlzIG5vcm1hbC4gUHJvZ3JhbW1pbmcgaXMgaGFyZC4KClByYWN0aWNlIGlzIHRoZSBrZXkuIFByYWN0aWNlLCBwcmFjdGljZSwgcHJhY3RpY2UuCgpBbmQgdGhpcyBjdXJyaWN1bHVtIHdpbGwgZ2l2ZSB5b3UgdGhvdXNhbmRzIG9mIGhvdXJzIG9mIGhhbmRzLW9uIHByb2dyYW1taW5nIHByYWN0aWNlLgoKQW5kIGlmIHlvdSB3YW50IHRvIGxlYXJuIG1vcmUgbWF0aCBhbmQgY29tcHV0ZXIgc2NpZW5jZSB0aGVvcnksIHdlIGFsc28gaGF2ZSB0aG91c2FuZHMgb2YgaG91cnMgb2YgdmlkZW8gY291cnNlcyBvbiBmcmVlQ29kZUNhbXAncyBZb3VUdWJlIGNoYW5uZWwuCgpJZiB5b3Ugd2FudCB0byBnZXQgYSBkZXZlbG9wZXIgam9iIG9yIGZyZWVsYW5jZSBjbGllbnRzLCBwcm9ncmFtbWluZyBza2lsbHMgd2lsbCBiZSBqdXN0IHBhcnQgb2YgdGhlIHB1enpsZS4gWW91IGFsc28gbmVlZCB0byBidWlsZCB5b3VyIHBlcnNvbmFsIG5ldHdvcmsgYW5kIHlvdXIgcmVwdXRhdGlvbiBhcyBhIGRldmVsb3Blci4KCllvdSBjYW4gZG8gdGhpcyBvbiBUd2l0dGVyIGFuZCBHaXRIdWIsIGFuZCBhbHNvIG9uIHRoZSBmcmVlQ29kZUNhbXAgZm9ydW0uCgpIYXBweSBjb2Rpbmch\"}";
-            return new StringContent(mockHttpResponseBody);
-        }
-
-        public static Stream ConvertToBase64(this Stream stream)
-        {
-            byte[] bytes;
+            HttpContent content = new StringContent(mockHttpResponseBody);
+            Stream stream = new MultiByteArrayMemoryStream();
+            await content.CopyToAsync(stream).ConfigureAwait(false);
             stream.Seek(0, SeekOrigin.Begin);
-            using (var memoryStream = new MemoryStream())
-            {
-                stream.CopyTo(memoryStream);
-                bytes = memoryStream.ToArray();
-            }
-
-            string base64 = Convert.ToBase64String(bytes);
-            return new MemoryStream(Encoding.UTF8.GetBytes(base64));
+            return stream;
         }
 
         /// <summary>
@@ -125,7 +149,7 @@
         {
             // don't dispose this output stream
             // taken care of during conversion of sdsItemWithoutBinaryData to compressed graph
-            MemoryStream outputBase64Stream = new MemoryStream();
+            Stream outputBase64Stream = new MultiByteArrayMemoryStream();
 
             using (var reader = JsonReaderWriterFactory.CreateJsonReader(inputStream, XmlDictionaryReaderQuotas.Max))
             {
@@ -155,10 +179,9 @@
                     reader.Read();
                 }
                 while (!reader.EOF && (d < reader.Depth || (d == reader.Depth && reader.NodeType == XmlNodeType.EndElement)));
-
-               outputBase64Stream.Seek(0, SeekOrigin.Begin);
             }
 
+            outputBase64Stream.Seek(0, SeekOrigin.Begin);
             return outputBase64Stream;
         }
 
@@ -168,7 +191,7 @@
         /// </summary>
         /// <param name="reader">xml reader</param>
         /// <returns>if copy was successful</returns>
-        public static bool CopyBase64ElementContents(this XmlReader reader, MemoryStream outputBase64Stream)
+        public static bool CopyBase64ElementContents(this XmlReader reader, Stream outputBase64Stream)
         {
             // TODO [dikum] : determine size based on perf metrics, make configurable
             var buffer = new byte[100];

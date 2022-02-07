@@ -5,4 +5,10 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Reference Include="Microsoft.M365.Core.Utility">
+      <HintPath>..\..\..\repos\MIG\target\distrib\ElcArchiveProcessor\netcoreapp3.1\win10-x64\publish\Microsoft.M365.Core.Utility.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
