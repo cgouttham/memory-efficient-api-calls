@@ -1,10 +1,4 @@
-﻿// ***********************************************************************
-// <copyright file="ImportItemRequestBody.cs" company="Microsoft">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-// ***********************************************************************
-
-namespace Microsoft.ElcArchiveProcessor.Models.SubstrateApiRequestTypes
+﻿namespace ConsoleApp1
 {
     using System;
     using System.IO;

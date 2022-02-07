@@ -1,7 +1,5 @@
 ﻿namespace ConsoleApp1
 {
-    using Microsoft.ElcArchiveProcessor.Models;
-    using Microsoft.ElcArchiveProcessor.Models.SubstrateApiRequestTypes;
     using Microsoft.Exchange.Common.Net;
     using Newtonsoft.Json;
     using System;

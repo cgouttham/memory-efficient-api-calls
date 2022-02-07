@@ -1,18 +1,17 @@
-﻿using Microsoft.ElcArchiveProcessor.Models;
-using Microsoft.ElcArchiveProcessor.Models.SubstrateApiRequestTypes;
-using Microsoft.Exchange.Common.Net;
-using Newtonsoft.Json;
-using System;
-using System.IO;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Runtime.Serialization.Json;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
-
+﻿
 namespace ConsoleApp1
 {
+    using Microsoft.Exchange.Common.Net;
+    using Newtonsoft.Json;
+    using System;
+    using System.IO;
+    using System.Net.Http;
+    using System.Net.Http.Headers;
+    using System.Runtime.Serialization.Json;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Xml;
+
     public static class ExportAndImportDataNewWay
     {
         public static async Task ExportAndImportLargeItemsEfficiently()
