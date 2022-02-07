@@ -15,7 +15,7 @@ namespace ConsoleApp1
 {
     public static class ExportAndImportDataNewWay
     {
-        private static async Task ExportAndImportLargeItemsEfficiently()
+        public static async Task ExportAndImportLargeItemsEfficiently()
         {
             // Send Mock HttpRequest that returns a massive Json Payload
             // using Stream httpContentStream = await SendMockExportItemRequestFromFileAsync().ConfigureAwait(false);
