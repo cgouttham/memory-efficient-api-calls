@@ -1,8 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "8ePiTtTdMW7icSc9bBn5MK5If1xVdoyPYAZRjUm0mUOlQ9BAIgdPrrO4NMWMWER8YE7h9WUTnvshyyFh84wJ2A==",
+  "dgSpecHash": "Gdfjr+f0prRIBVvGUO/4+SszC+WyEt7OX/KtW6QXqaMI4ezDFwutCkKIVQ9nW9Tm9gHdoixb00qmOs5vXDWa8g==",
   "success": true,
   "projectFilePath": "C:\\Users\\goch\\source\\repos\\ConsoleApp1\\ConsoleApp1.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\goch\\.nuget\\packages\\newtonsoft.json\\13.0.1\\newtonsoft.json.13.0.1.nupkg.sha512"
+  ],
   "logs": []
 }
