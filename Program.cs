@@ -19,14 +19,9 @@
         * What if a single property has a value that is super large? e.g. a base64 encoded message that can be 50MB+. 
         * In that scenario, you'll need to do some Stream Gymnastics to handle the object in a memory efficient way.
         */
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            int randomAge = Sample.RandAge.Hi;
-            int randomAge2 = Sample.RandAge.Hi;
-            Console.WriteLine(randomAge);
-            Console.WriteLine(randomAge);
-            Console.WriteLine("Done");
-            // await TestExportAndImportWithBufferPooling().ConfigureAwait(false);
+            await TestExportAndImportWithBufferPooling().ConfigureAwait(false);
 
         }
 
@@ -41,10 +36,13 @@
                 /* Comment Out the One You don't want to run. You can use Perfview to do a more detailed analysis of performance of app */
 
                 // Old way I parsed ExportedItem from DB1 and imported to DB2
-                await ExportAndImportDataOldWay.ExportAndImportLargeItemsNotEfficiently().ConfigureAwait(false);
+                // await ExportAndImportDataOldWay.ExportAndImportLargeItemsNotEfficiently().ConfigureAwait(false);
 
                 // Optimized way to handle the Exported Json object and import it to DB2
-                await ExportAndImportDataNewWay.ExportAndImportLargeItemsEfficiently().ConfigureAwait(false);
+                // await ExportAndImportDataNewWay.ExportAndImportLargeItemsEfficiently().ConfigureAwait(false);
+
+                // Optimized way to handle the Exported Json object and import it to DB2
+                await ExportAndImportDataNewestWay.ExportAndImportLargeItemsEfficiently().ConfigureAwait(false);
             }
             Console.WriteLine("Done");
         }
