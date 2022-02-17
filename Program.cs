@@ -13,13 +13,24 @@
 
     static class Program
     {
-         /*
-         * Imagine you sent an HttpRequest with a massive Json Payload. 
-         * If your json consists of many tiny items in an array, you can use a json streamer no problemo. 
-         * What if a single property has a value that is super large? e.g. a base64 encoded message that can be 50MB+. 
-         * In that scenario, you'll need to do some Stream Gymnastics to handle the object in a memory efficient way.
-         */
-        static async Task Main(string[] args)
+        /*
+        * Imagine you sent an HttpRequest with a massive Json Payload. 
+        * If your json consists of many tiny items in an array, you can use a json streamer no problemo. 
+        * What if a single property has a value that is super large? e.g. a base64 encoded message that can be 50MB+. 
+        * In that scenario, you'll need to do some Stream Gymnastics to handle the object in a memory efficient way.
+        */
+        static void Main(string[] args)
+        {
+            int randomAge = Sample.RandAge.Hi;
+            int randomAge2 = Sample.RandAge.Hi;
+            Console.WriteLine(randomAge);
+            Console.WriteLine(randomAge);
+            Console.WriteLine("Done");
+            // await TestExportAndImportWithBufferPooling().ConfigureAwait(false);
+
+        }
+
+        private static async Task TestExportAndImportWithBufferPooling()
         {
             // Simulating (Exporting and Importing 20 Large Items (50 mb Items) consecutively to analyze memory efficiency and CPU usage.
             // I've attached the "tiny_item.json" file but not the large item. That is in the gitignore because I didn't want to add large items like that 
@@ -27,7 +38,7 @@
             // if you'd like to test it yourself.
             for (int i = 0; i < 20; i++)
             {
-                /* Comment Out the One You don't want to run. You can use Perfview to do a more detailed analysis of performance of app */ 
+                /* Comment Out the One You don't want to run. You can use Perfview to do a more detailed analysis of performance of app */
 
                 // Old way I parsed ExportedItem from DB1 and imported to DB2
                 await ExportAndImportDataOldWay.ExportAndImportLargeItemsNotEfficiently().ConfigureAwait(false);
@@ -36,6 +47,21 @@
                 await ExportAndImportDataNewWay.ExportAndImportLargeItemsEfficiently().ConfigureAwait(false);
             }
             Console.WriteLine("Done");
+        }
+    }
+
+    public class Sample
+    {
+        public static RandomAge RandAge { get; } = new RandomAge();
+    }
+
+    public class RandomAge
+    {
+        public int Hi { get; set; }
+
+        public RandomAge()
+        {
+            this.Hi = new Random().Next();
         }
     }
 }
